@@ -1,7 +1,16 @@
-FROM eclipse-temurin:17-jdk-alpine
-RUN mkdir /app
+FROM maven:3.9.4-eclipse-temurin-17 AS build
 WORKDIR /app
 
-COPY target/*.jar /app/app.jar
+COPY pom.xml .
+COPY src ./src
+COPY database ./database   
+RUN mvn clean package -DskipTests
 
-CMD [ "java","-jar","/app/app.jar"]
+
+FROM eclipse-temurin:17-jdk-alpine
+WORKDIR /app
+
+COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/database ./database 
+EXPOSE 8080
+CMD ["java", "-jar", "app.jar"]
